@@ -12,6 +12,8 @@ from configparser import ConfigParser
 import numpy as np
 import pandas as pd
 
+import driver
+
 # Local imports
 import astroq
 
@@ -56,7 +58,7 @@ def main():
                               default=1,
                               help="Downsample the request frame by this factor for faster testing (default: 1, no thinning)."
                             )
-    psr_bench.set_defaults(func=astroq.driver.bench)
+    psr_bench.set_defaults(func=driver.bench)
 
     ## subcommand of astroq: plot -- run the plotting suite
     psr_plot = subpsr.add_parser('plot', parents=[psr_parent],
@@ -68,7 +70,7 @@ def main():
                               required=True,
                               help="Relative path of config file."
                               )
-    psr_plot.set_defaults(func=astroq.driver.plot)
+    psr_plot.set_defaults(func=driver.plot)
 
 
     ## subcommand of astroq: kpfcc -- Do KPFCC stuff
@@ -77,7 +79,7 @@ def main():
                                   prefix_chars='-'
                                   )
     kpfcc_subpsr = psr_kpfcc.add_subparsers(title='kpfcc subcommands', dest='kpfcc_subcommand')
-    psr_kpfcc.set_defaults(func=astroq.driver.kpfcc)
+    psr_kpfcc.set_defaults(func=driver.kpfcc)
 
     ## subcommand of kpfcc: prepare -- Prep for a new semester
     psr_kpfcc_prep = kpfcc_subpsr.add_parser('prep', #parents=[psr_parent],
@@ -104,7 +106,7 @@ def main():
                           default="2025B_E473",
                           help="The program code for the band 3 program."
                             )
-    psr_kpfcc_prep.set_defaults(func=astroq.driver.kpfcc_prep)
+    psr_kpfcc_prep.set_defaults(func=driver.kpfcc_prep)
 
  
     ## subcommand of kpfcc: webapp -- launch web app to view interactive plots
@@ -117,7 +119,7 @@ def main():
                               required=True,
                               help="Path to the uptree directory (e.g., /Users/jack/Desktop)."
                                 )
-    psr_kpfcc_webapp.set_defaults(func=astroq.driver.kpfcc_webapp)
+    psr_kpfcc_webapp.set_defaults(func=driver.kpfcc_webapp)
 
     ## subcommand of kpfcc: plan-semester -- plan a semester's worth of observations
     psr_kpfcc_plan_semester = kpfcc_subpsr.add_parser('plan-semester', #parents=[psr_parent],
@@ -135,7 +137,7 @@ def main():
                                          default=False,
                                          help="Turn on to run filler.csv as if it were request.csv"
                                          )
-    psr_kpfcc_plan_semester.set_defaults(func=astroq.driver.kpfcc_plan_semester)
+    psr_kpfcc_plan_semester.set_defaults(func=driver.kpfcc_plan_semester)
 
     ## subcommand of kpfcc: plan-night -- run the night planner
     psr_kpfcc_plan_night = kpfcc_subpsr.add_parser('plan-night', #parents=[psr_parent],
@@ -147,7 +149,7 @@ def main():
                                       required=True,
                                       help="Relative path of config file."
                                       )
-    psr_kpfcc_plan_night.set_defaults(func=astroq.driver.ttp)
+    psr_kpfcc_plan_night.set_defaults(func=driver.ttp)
 
     ## subcommand of astroq: compare -- compare request set and schedule file
     psr_compare = subpsr.add_parser('compare', parents=[psr_parent],
@@ -164,7 +166,7 @@ def main():
                               required=True,
                               help="Relative path of schedule file."
                               )
-    psr_compare.set_defaults(func=astroq.driver.requests_vs_schedule)
+    psr_compare.set_defaults(func=driver.requests_vs_schedule)
 
     # If no arguments are provided, print help message and exit
     if len(sys.argv)==1:
