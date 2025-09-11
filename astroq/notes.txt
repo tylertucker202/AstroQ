@@ -1,0 +1,45 @@
+plots: 
+cof: semester_planner.requests_frame,data_astroq[0][program][star_ind] 
+
+birdseye: semester_planner,nulltimes, [star_obj] or star_objects
+
+tau interline: does not actuall use semester_planner. Uses star_obj
+
+football: semester_planner needs semester, number of observatble nights for each target, star_obj. Not sure if this plot is any good.
+
+ladder: data_ttp
+slew animation: data_ttp
+slew path: data_ttp
+
+
+Night plan:
+Ladder
+slew animation
+slew path
+
+Star page:
+cof
+birdseye. uses nulltimes and semester planner
+tau interline
+football
+
+Admin page:
+cof
+birdseye
+tau interline
+football
+
+Program Page: same as star page
+
+
+
+data_astroq: I believe these can be converted into json easily
+data_astroq[0] contain programs dictionary
+data_astroq[1] program as stars. Create list of "stars" objects which are really the programmatic overview
+data_astroq[2] nulltime. Used in the birdseye view plot to blackout the unavailble squares
+
+semester_planner:
+requests_frame: dict
+today_starting_night: int
+semester_length: int
+slot_size: int

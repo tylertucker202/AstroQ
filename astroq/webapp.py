@@ -15,7 +15,7 @@ import imageio.v3 as iio
 import numpy as np
 import pandas as pd
 import plotly.io as pio
-from flask import Flask, render_template, request, abort
+from flask import Flask, render_template, request, abort, send_from_directory
 from socket import gethostname 
 
 # Local imports
@@ -32,9 +32,9 @@ data_astroq = None
 data_ttp = None
 semester_planner = None
 night_planner = None
-uptree_path = None
+uptree_path = '.' #TODO make config
 
-def load_data_for_path(semester_code, date, band, uptree_path):
+def load_data_for_path(semester_code, date, band):
     """Load data for a specific semester_code/date/band combination"""
     global data_astroq, data_ttp, semester_planner, night_planner
     
@@ -96,14 +96,12 @@ def index():
 @app.route("/<semester_code>/<date>/<band>/<program_code>")
 def dynamic_page(semester_code, date, band, page=None, starname=None, program_code=None):
     """Handle all dynamic routes based on URL parameters"""
-    global uptree_path
-    
     # Validate parameters
     if band not in ['band1', 'band3']:
         abort(400, description="Band must be 'band1' or 'band3'")
     
     # Load data for this path
-    success, message = load_data_for_path(semester_code, date, band, uptree_path)
+    success, message = load_data_for_path(semester_code, date, band)
     if not success:
         return f"Error: {message}", 404
     
@@ -271,14 +269,14 @@ def render_nightplan_page():
 @app.route("/<semester_code>/<date>/<band>/download_nightplan")
 def download_nightplan(semester_code, date, band):
     """Download the Magiq formatted night plan file"""
-    global uptree_path, semester_planner, night_planner
+    semester_planner, night_planner
     
     # Validate parameters
     if band not in ['band1', 'band3']:
         abort(400, description="Band must be 'band1' or 'band3'")
     
     # Load data for this path
-    success, message = load_data_for_path(semester_code, date, band, uptree_path)
+    success, message = load_data_for_path(semester_code, date, band)
     if not success:
         return f"Error: {message}", 404
     
@@ -294,8 +292,8 @@ def download_nightplan(semester_code, date, band):
             return "Error: Night plan file not found", 404
         
         # Return the file for download
-        from flask import send_file
-        return send_file(script_file_path, 
+        return send_from_directory(os.path.dirname(script_file_path), 
+                        os.path.basename(script_file_path),
                         as_attachment=True,
                         download_name=f'script_{night_planner.current_day}_nominal.txt',
                         mimetype='text/plain')
@@ -303,15 +301,9 @@ def download_nightplan(semester_code, date, band):
     except Exception as e:
         return f"Error downloading file: {str(e)}", 500
 
-def launch_app(uptree_path_param):
+def launch_app():
     """Launch the Flask app"""
-    global uptree_path
-    uptree_path = uptree_path_param
-    
-    if running_on_keck_machines:
-        app.run(host=gethostname(), debug=False, use_reloader=False, port=50001)
-    else:
-        app.run(debug=True, use_reloader=True, port=50001)
+    app.run(host=gethostname(), debug=False, use_reloader=False, port=50002)
 
 if __name__ == "__main__":
-    launch_app(".")
+    launch_app()

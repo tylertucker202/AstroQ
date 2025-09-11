@@ -29,6 +29,7 @@ import astroq.nplan as nplan
 import astroq.plot as pl
 import astroq.splan as splan
 import astroq.webapp as app
+import json
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)  # Lower level to capture more messages
@@ -189,6 +190,8 @@ def kpfcc_plan_semester(args):
     # Run the semester planner directly from config file
     semester_planner = splan.SemesterPlanner(cf, b3)
     semester_planner.run_model()
+    semester_json = json.dumps(astroq_result_encoder(semester_planner))
+    print(semester_json)  # Or save to file as needed
     return
 
 def plot(args):
@@ -302,6 +305,9 @@ def ttp(args):
     
     with open(planner_pickle_path, 'wb') as f:
         pickle.dump(night_planner, f)
+
+    night_planner_json = json.dumps(astroq_result_encoder(night_planner))
+    print(night_planner_json)  # Or save to file as needed
     return
 
 def requests_vs_schedule(args):
@@ -401,3 +407,9 @@ def requests_vs_schedule(args):
                             f"(scheduled: {min_slot_diffs} slots; required: {tau_intra_slots} slots)")
             assert min_slot_diffs >= tau_intra_slots, tau_intra_err
 
+def astroq_result_encoder(obj):
+    if isinstance(obj, splan.SemesterPlanner):
+        return obj.__dict__
+    if isinstance(obj, nplan.NightPlanner):
+        return obj.__dict__
+    raise TypeError("Type not serializable")

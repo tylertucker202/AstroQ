@@ -31,6 +31,7 @@ import ttp.formatting as formatting
 import ttp.telescope as telescope
 import ttp.plotting as plotting
 import ttp.model as model
+import json
 
 class NightPlanner(object):
     """
@@ -101,6 +102,8 @@ class NightPlanner(object):
         
         with open(semester_planner_pkl, 'rb') as f:
             self.semester_planner = pickle.load(f)
+
+        #TODO: create a json file containing night_planner parameters
         
         # Pull properties from SemesterPlanner for consistency
         self.semester_start_date = self.semester_planner.semester_start_date
