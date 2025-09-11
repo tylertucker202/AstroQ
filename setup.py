@@ -8,7 +8,7 @@ def get_property(prop, project):
     return result.group(1)
 
 setup(
-    name="astroq",
+    name="tcoda-astroq",
     version=get_property('__version__', 'astroq'),
     packages=find_packages(),
     install_requires=[],
