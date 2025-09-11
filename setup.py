@@ -15,9 +15,9 @@ setup(
     description="The AstroQ auto-scheduler software.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    author="Jack Lubin",
-    author_email="jblubin@ucla.edu",
-    url="https://github.com/jluby127/optimalAllocation/",
+    author="Jack Lubin, Tyler Coda",
+    author_email="tcoda@keck.hawaii.edu",
+    url="https://github.com/tylertucker202/AstroQ/",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
