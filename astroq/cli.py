@@ -12,7 +12,7 @@ from configparser import ConfigParser
 import numpy as np
 import pandas as pd
 
-import driver
+from . import driver
 
 # Local imports
 import astroq

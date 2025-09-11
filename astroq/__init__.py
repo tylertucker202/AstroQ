@@ -6,7 +6,7 @@ AstroQ: Optimized observation scheduling for astronomical observations.
 import logging
 import os
 
-__version__ = '2.1.0'
+__version__ = '2.2.0'
 DATADIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
 
 logger = logging.getLogger(__name__)
