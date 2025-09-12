@@ -47,12 +47,21 @@ def load_data_for_path(semester_code, date, band):
     
     semester_planner_pkl = os.path.join(workdir, 'semester_planner.pkl')
     night_planner_pkl = os.path.join(workdir, 'night_planner.pkl')
+
+    data_astroq_pkl = os.path.join(workdir, 'data_astroq.pkl')
     
     # Load semester planner
     try:
         with open(semester_planner_pkl, 'rb') as f:
             semester_planner = pickle.load(f)
-        data_astroq = pl.process_stars(semester_planner)
+        if not os.path.exists(data_astroq_pkl):
+            print(f"data_astroq.pkl not found in {workdir}")
+            data_astroq = pl.process_stars(semester_planner) # writing data_astroq.pkl
+            with open(data_astroq_pkl, 'wb') as f:
+                pickle.dump(data_astroq, f)
+        else: 
+            with open(data_astroq_pkl, 'rb') as f:
+                data_astroq = pickle.load(f)
     except Exception as e:
         semester_planner = None
         data_astroq = None
@@ -90,6 +99,46 @@ def index():
     """
     return render_template("homepage.html", navigation_text=navigation_text)
 
+
+# Dynamic data for all pages
+@app.route("/data/<semester_code>/<date>/<band>/star/<starname>")
+@app.route("/data/<semester_code>/<date>/<band>/<page>")
+@app.route("/data/<semester_code>/<date>/<band>/<program_code>")
+def dynamic_page(semester_code, date, band, page=None, starname=None, program_code=None):
+    """Handle all dynamic routes based on URL parameters"""
+    # Validate parameters
+    if band not in ['band1', 'band3']:
+        abort(400, description="Band must be 'band1' or 'band3'")
+    
+    # Load data for this path
+    success, message = load_data_for_path(semester_code, date, band)
+    if not success:
+        return f"Error: {message}", 404
+    
+    # Route to appropriate page based on parameters
+    if starname is not None:
+        # This is a star route
+        return render_star_page(starname)
+    elif page == "admin":
+        return render_admin_page()
+    elif page == "nightplan":
+        return render_nightplan_page()
+    elif program_code is not None:
+        # This is a program route - check if it's a valid program code
+        if program_code in data_astroq[0].keys():
+            return render_program_page(semester_code, date, band, program_code)
+        else:
+            # If not a program code, treat as a page
+            page = program_code
+            if page == "admin":
+                return render_admin_page()
+            elif page == "nightplan":
+                return render_nightplan_page()
+            else:
+                abort(404, description=f"Page '{page}' not found")
+    else:
+        abort(404, description=f"Page '{page}' not found")
+
 # Dynamic route for all pages
 @app.route("/<semester_code>/<date>/<band>/star/<starname>")
 @app.route("/<semester_code>/<date>/<band>/<page>")
@@ -115,7 +164,7 @@ def dynamic_page(semester_code, date, band, page=None, starname=None, program_co
         return render_nightplan_page()
     elif program_code is not None:
         # This is a program route - check if it's a valid program code
-        if program_code in data_astroq[0]:
+        if program_code in data_astroq[0].keys():
             return render_program_page(semester_code, date, band, program_code)
         else:
             # If not a program code, treat as a page

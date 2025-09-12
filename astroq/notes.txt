@@ -34,12 +34,14 @@ Program Page: same as star page
 
 
 data_astroq: I believe these can be converted into json easily
-data_astroq[0] contain programs dictionary
-data_astroq[1] program as stars. Create list of "stars" objects which are really the programmatic overview
-data_astroq[2] nulltime. Used in the birdseye view plot to blackout the unavailble squares
+    data_astroq[0] contain programs dictionary for stars
+    data_astroq[1] program as stars. Create list of "stars" objects which are really the programmatic overview. Not sure this is even needed. 
+    data_astroq[2] nulltime. Used in the birdseye view plot to blackout the unavailble squares. Not sure this is needed
 
 semester_planner:
-requests_frame: dict
-today_starting_night: int
-semester_length: int
-slot_size: int
+    requests_frame: dict
+    today_starting_night: int
+    semester_length: int
+    slot_size: int
+    access_record: 
+        is_alloc: 
