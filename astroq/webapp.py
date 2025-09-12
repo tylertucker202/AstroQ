@@ -15,7 +15,7 @@ import imageio.v3 as iio
 import numpy as np
 import pandas as pd
 import plotly.io as pio
-from flask import Flask, render_template, request, abort, send_from_directory
+from flask import Flask, render_template, request, abort, send_from_directory, jsonify
 from socket import gethostname 
 
 # Local imports
@@ -30,54 +30,56 @@ app = Flask(__name__, template_folder="../templates")
 
 # Global variables to store loaded data
 data_astroq = None
-data_ttp = None
 semester_planner = None
 night_planner = None
 uptree_path = '.' #TODO make config
 
-def load_data_for_path(semester_code, date, band):
+def load_data_for_path(semester_code, date, band, page=None):
     """Load data for a specific semester_code/date/band combination"""
-    global data_astroq, data_ttp, semester_planner, night_planner
-    
+    global data_astroq, semester_planner, night_planner
+
     # Construct the workdir path based on URL parameters
-    workdir = f"{uptree_path}/{semester_code}/{date}/{band}/outputs/"
-    
-    # Check if the directory exists
+    workdir = os.path.join(uptree_path, semester_code, date, band, "outputs")
     if not os.path.exists(workdir):
         return False, f"Directory not found: {workdir}"
-    
-    semester_planner_pkl = os.path.join(workdir, 'semester_planner.pkl')
-    night_planner_pkl = os.path.join(workdir, 'night_planner.pkl')
 
-    data_astroq_pkl = os.path.join(workdir, 'data_astroq.pkl')
+    if page == "nightplan":
+        night_planner_pkl = os.path.join(workdir, 'night_planner.pkl')
+        # Load night planner (optional)
+        try:
+            with open(night_planner_pkl, 'rb') as f:
+                night_planner = pickle.load(f)
+        except:
+            night_planner = None
+            return False, f"Error loading night planner from {night_planner_pkl}"
+        return True, "Data loaded successfully"
+
+    if page == "admin" or page == 'star':
+        semester_planner_pkl = os.path.join(workdir, 'semester_planner.pkl')
+        data_astroq_pkl = os.path.join(workdir, 'data_astroq.pkl')
+        # Load semester planner
+        try:
+            with open(semester_planner_pkl, 'rb') as f:
+                semester_planner = pickle.load(f)
+            if not os.path.exists(data_astroq_pkl):
+                print(f"data_astroq.pkl not found in {workdir}")
+                data_astroq = pl.process_stars(semester_planner) # writing data_astroq.pkl
+                with open(data_astroq_pkl, 'wb') as f:
+                    pickle.dump(data_astroq, f)
+            else: 
+                with open(data_astroq_pkl, 'rb') as f:
+                    data_astroq = pickle.load(f)
+        except Exception as e:
+            semester_planner = None
+            data_astroq = None
+            return False, f"Error loading semester planner: {str(e)}"
+        except Exception as e:
+            semester_planner = None
+            return False, f"Error loading semester planner: {str(e)}"
+        return True, "Data loaded successfully"
+        
     
-    # Load semester planner
-    try:
-        with open(semester_planner_pkl, 'rb') as f:
-            semester_planner = pickle.load(f)
-        if not os.path.exists(data_astroq_pkl):
-            print(f"data_astroq.pkl not found in {workdir}")
-            data_astroq = pl.process_stars(semester_planner) # writing data_astroq.pkl
-            with open(data_astroq_pkl, 'wb') as f:
-                pickle.dump(data_astroq, f)
-        else: 
-            with open(data_astroq_pkl, 'rb') as f:
-                data_astroq = pickle.load(f)
-    except Exception as e:
-        semester_planner = None
-        data_astroq = None
-        return False, f"Error loading semester planner: {str(e)}"
     
-    # Load night planner (optional)
-    try:
-        with open(night_planner_pkl, 'rb') as f:
-            night_planner = pickle.load(f)
-            data_ttp = night_planner.solution
-    except:
-        night_planner = None
-        data_ttp = None
-    
-    return True, "Data loaded successfully"
 
 # New homepage with navigation instructions
 @app.route("/", methods=["GET"])
@@ -112,7 +114,7 @@ def dynamic_data(semester_code, date, band, page=None, starname=None, program_co
         abort(400, description="Band must be 'band1' or 'band3'")
     
     # Load data for this path
-    success, message = load_data_for_path(semester_code, date, band)
+    success, message = load_data_for_path(semester_code, date, band, page)
     if not success:
         return f"Error: {message}", 404
     
@@ -123,7 +125,16 @@ def dynamic_data(semester_code, date, band, page=None, starname=None, program_co
     elif page == "admin":
         return render_admin_page()
     elif page == "nightplan":
-        return render_nightplan_page()
+        ladder_data = {}
+        slew_animation_data = {}
+        slew_path_data = {}
+        data = {
+            'ladder_data': ladder_data,
+            'slew_animation_data': slew_animation_data,
+            'slew_path_data': slew_path_data
+        }
+        return jsonify(data), 200
+
     elif program_code is not None:
         # This is a program route - check if it's a valid program code
         if program_code in data_astroq[0].keys():
@@ -151,8 +162,7 @@ def dynamic_page(semester_code, date, band, page=None, starname=None, program_co
         abort(400, description="Band must be 'band1' or 'band3'")
     
     # Load data for this path
-    pdb.set_trace()
-    success, message = load_data_for_path(semester_code, date, band)
+    success, message = load_data_for_path(semester_code, date, band, page)
     if not success:
         return f"Error: {message}", 404
     
@@ -278,8 +288,12 @@ def render_star_page(starname):
 
 def render_nightplan_page():
     """Render the night plan page"""
-    if data_ttp is None:
+    if night_planner is None:
         return "Error: No night planner data available", 404
+    try:
+        data_ttp = night_planner.solution
+    except:
+        return "Error: Night planner solution data not available", 404
     
     plots = ['script_table', 'slewgif', 'ladder', 'slewpath']
 
@@ -327,7 +341,8 @@ def download_nightplan(semester_code, date, band):
         abort(400, description="Band must be 'band1' or 'band3'")
     
     # Load data for this path
-    success, message = load_data_for_path(semester_code, date, band)
+    success, message = load_data_for_path(semester_code, date, band, 'nightplan') # to get night_planner
+    success, message = load_data_for_path(semester_code, date, band, 'admin') # to get semester_planner and data_astroq
     if not success:
         return f"Error: {message}", 404
     
