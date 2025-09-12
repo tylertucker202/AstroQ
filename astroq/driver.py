@@ -189,6 +189,7 @@ def kpfcc_plan_semester(args):
     # Run the semester planner directly from config file
     semester_planner = splan.SemesterPlanner(cf, b3)
     semester_planner.run_model()
+    #TODO implement this
     semester_json = json.dumps(astroq_result_encoder(semester_planner))
     print(semester_json)  # Or save to file as needed
     return
