@@ -16,6 +16,7 @@ import requests
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
 import astropy.units as u
+import pdb
 
 exception_fields = ['_id', 'del_flag', 'metadata.comment', 'metadata.details', 'metadata.history',
                     'metadata.instruments', 'metadata.is_approved', 'metadata.last_modification',

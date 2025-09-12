@@ -22,6 +22,7 @@ from socket import gethostname
 import astroq.nplan as nplan
 import astroq.plot as pl
 import astroq.splan as splan
+import pdb
 
 running_on_keck_machines = False
 
@@ -150,6 +151,7 @@ def dynamic_page(semester_code, date, band, page=None, starname=None, program_co
         abort(400, description="Band must be 'band1' or 'band3'")
     
     # Load data for this path
+    pdb.set_trace()
     success, message = load_data_for_path(semester_code, date, band)
     if not success:
         return f"Error: {message}", 404
