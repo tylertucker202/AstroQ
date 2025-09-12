@@ -152,17 +152,21 @@ def dynamic_data(semester_code, date, band, page=None, starname=None, program_co
         abort(404, description=f"Page '{page}' not found")
 
 # Dynamic route for all pages
-@app.route("/<semester_code>/<date>/<band>/star/<starname>")
 @app.route("/<semester_code>/<date>/<band>/<page>")
-@app.route("/<semester_code>/<date>/<band>/<program_code>")
-def dynamic_page(semester_code, date, band, page=None, starname=None, program_code=None):
+def dynamic_page(semester_code, date, band, page=None):
     """Handle all dynamic routes based on URL parameters"""
     # Validate parameters
     if band not in ['band1', 'band3']:
         abort(400, description="Band must be 'band1' or 'band3'")
     
+    program_code = request.args.get('program_code')
+    starname = request.args.get('starname')
+    
     # Load data for this path
-    success, message = load_data_for_path(semester_code, date, band, page)
+    if program_code is not None:
+        success, message = load_data_for_path(semester_code, date, band, 'admin') # to get semester_planner and data_astroq
+    else:
+        success, message = load_data_for_path(semester_code, date, band, page)
     if not success:
         return f"Error: {message}", 404
     
