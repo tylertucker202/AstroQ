@@ -105,7 +105,7 @@ def index():
 @app.route("/data/<semester_code>/<date>/<band>/star/<starname>")
 @app.route("/data/<semester_code>/<date>/<band>/<page>")
 @app.route("/data/<semester_code>/<date>/<band>/<program_code>")
-def dynamic_page(semester_code, date, band, page=None, starname=None, program_code=None):
+def dynamic_data(semester_code, date, band, page=None, starname=None, program_code=None):
     """Handle all dynamic routes based on URL parameters"""
     # Validate parameters
     if band not in ['band1', 'band3']:
