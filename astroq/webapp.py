@@ -265,7 +265,7 @@ def dynamic_data(semester_code, date, band, page=None):
         request_data = request_df.to_dict(orient='records')
         birdseye_data = {
             'starmap': star_obj.starmap.tolist(),
-            'dates': semester_planner.all_dates_array.tolist(),
+            'dates': semester_planner.all_dates_array,
         }
 
         tau_inter_line_data = get_tau_inter_line_data([star_obj])
@@ -294,7 +294,7 @@ def dynamic_data(semester_code, date, band, page=None):
 
         birdseye_data = {
             'starmap': [star_obj.starmap.tolist() for star_obj in programs],
-            'dates': semester_planner.all_dates_array.tolist(), 
+            'dates': semester_planner.all_dates_array, 
         }
 
         tau_inter_line_data = get_tau_inter_line_data(programs)
