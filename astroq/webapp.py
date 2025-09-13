@@ -163,6 +163,18 @@ def get_slew_animation_data():
 
 # Dynamic data for all pages
 
+def get_cof_data(all_stars):
+    lines = []
+    for star in all_stars:
+        line = dict(
+            dates=star.dates.astype(str).tolist(),
+            cumulative_observe_pct=star.cume_observe_pct.astype(float).tolist(),
+            name=star.starname,
+            total_observations_requested=star.total_observations_requested
+        )
+        lines.append(line)
+    return lines
+
 def get_cof_data_for_starname(starname):
 
     program_dict = data_astroq[0]
@@ -179,12 +191,10 @@ def get_cof_data_for_starname(starname):
     
     if starinfo is None:
         raise ValueError(f"Error, star {starname} not found in programs {list(program_dict.keys())}")
-    dates = semester_planner.all_dates_array
-    starCumObservePercent = star_obj.cume_observe_pct
+    lines = get_cof_data([star_obj])
     cof_data = {
         'starinfo': starinfo,
-        'dates': dates,
-        'cumulative_observe_percent': starCumObservePercent,
+        'lines': lines
     }
     return cof_data, star_obj
 
@@ -250,8 +260,11 @@ def dynamic_data(semester_code, date, band, page=None):
 
     # Route to appropriate page based on parameters
     if starname is not None:
+
         cof_data, star_obj = get_cof_data_for_starname(starname)
 
+        request_df = pl.get_request_frame(semester_planner, [star_obj])
+        request_data = request_df.to_dict(orient='records')
         birdseye_data = {
             'starmap': star_obj.starmap.tolist(),
             'dates': semester_planner.add_dates_array.tolist(), 
@@ -261,6 +274,7 @@ def dynamic_data(semester_code, date, band, page=None):
         football_data = get_football_data([star_obj])
 
         data = {
+            'request_data': request_data,
             'cof': cof_data,
             'birdseye': birdseye_data,
             'tau_inter_line': tau_inter_line_data,
@@ -268,7 +282,34 @@ def dynamic_data(semester_code, date, band, page=None):
         }
         return data, 200
     elif page == "admin":
-        return render_admin_page()
+
+        all_stars_from_all_programs = np.concatenate(list(data_astroq[0].values()))
+
+        # Get request frame table for all stars
+        request_df = pl.get_request_frame(semester_planner, all_stars_from_all_programs)
+        starinfo = request_df.to_dict(orient='records')
+
+        lines = get_cof_data(all_stars_from_all_programs)
+        cof_data = {
+            'lines': lines
+        }
+
+        birdseye_data = {
+            'starmap': star_obj.starmap.tolist(),
+            'dates': semester_planner.add_dates_array.tolist(), 
+        }
+
+        tau_inter_line_data = get_tau_inter_line_data(all_stars_from_all_programs)
+        football_data = get_football_data([all_stars_from_all_programs])
+
+        data = {
+            'starinfo': starinfo,
+            'cof': cof_data,
+            'birdseye': birdseye_data,
+            'tau_inter_line': tau_inter_line_data,
+            'football': football_data
+        }
+        return data, 200
     elif page == "nightplan":
         ladder_data = get_ladder_data()
         slew_animation_data = get_slew_animation_data()
@@ -277,20 +318,6 @@ def dynamic_data(semester_code, date, band, page=None):
             'slew_animation_data': slew_animation_data,
         }
         return jsonify(data), 200
-
-    elif program_code is not None:
-        # This is a program route - check if it's a valid program code
-        if program_code in data_astroq[0].keys():
-            return render_program_page(program_code)
-        else:
-            # If not a program code, treat as a page
-            page = program_code
-            if page == "admin":
-                return render_admin_page()
-            elif page == "nightplan":
-                return render_nightplan_page()
-            else:
-                abort(404, description=f"Page '{page}' not found")
     else:
         abort(404, description=f"Page '{page}' not found")
 
