@@ -298,7 +298,7 @@ def dynamic_data(semester_code, date, band, page=None):
         }
 
         tau_inter_line_data = get_tau_inter_line_data(programs)
-        football_data = get_football_data([programs])
+        football_data = get_football_data(programs)
 
         data = {
             'starinfo': starinfo,
