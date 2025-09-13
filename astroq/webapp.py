@@ -106,7 +106,6 @@ def index():
 
 
 def get_ladder_data():
-    # TODO: make get ladder data a function
     data_tts = night_planner.solution if night_planner is not None else None
     data = pd.DataFrame.from_dict(
         data_tts[0].plotly).to_dict(orient='records')
@@ -136,8 +135,7 @@ def get_slew_animation_data():
         targets.append(tgt)
 
     # Compute alt/az of each target at each time
-    AZ = model.observatory.observer.altaz(
-        t, list_targets, grid_times_targets=True)
+    AZ = model.observatory.observer.altaz(tjd, list_targets, grid_times_targets=True)
 
     # Telescope slew path
     stamps = [0] * len(tjd)
