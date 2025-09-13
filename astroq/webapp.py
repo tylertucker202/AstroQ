@@ -147,7 +147,7 @@ def get_slew_animation_data():
     alt = np.round(AZ.az.rad, 2).T.tolist()
     az = (90 - np.round(AZ.alt.deg, 2)).T.tolist()
     tel_az = np.round(AZ1.az.rad, 2).tolist()
-    tel_zen = 90 - np.round(AZ1.alt.deg, 2).tolist()
+    tel_zen = (90 - np.round(AZ1.alt.deg, 2)).tolist()
 
     slew_animation_data = {
         'targets': targets,
