@@ -164,8 +164,9 @@ def get_slew_animation_data():
 def get_cof_data(all_stars):
     lines = []
     for star in all_stars:
+        dates = [*list(star.observations_past.keys()), *list(star.observations_future.keys())]
         line = dict(
-            dates=star.dates.astype(str).tolist(),
+            dates=dates,
             cumulative_observe_pct=star.cume_observe_pct.astype(float).tolist(),
             name=star.starname,
             total_observations_requested=star.total_observations_requested
