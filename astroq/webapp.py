@@ -278,15 +278,16 @@ def dynamic_data(semester_code, date, band, page=None):
             'football': football_data
         }
         return data, 200
-    elif page == "admin":
+    elif page in ["admin" or "program"]:
+        programs = np.concatenate(list(data_astroq[0].values())) if page=='admin' else data_astroq[0].get(program_code, None)
 
-        all_stars_from_all_programs = np.concatenate(list(data_astroq[0].values()))
+        programs = np.concatenate(list(data_astroq[0].values()))
 
         # Get request frame table for all stars
-        request_df = pl.get_request_frame(semester_planner, all_stars_from_all_programs)
+        request_df = pl.get_request_frame(semester_planner, programs)
         starinfo = request_df.to_dict(orient='records')
 
-        lines = get_cof_data(all_stars_from_all_programs)
+        lines = get_cof_data(programs)
         cof_data = {
             'lines': lines
         }
@@ -296,8 +297,8 @@ def dynamic_data(semester_code, date, band, page=None):
             'dates': semester_planner.add_dates_array.tolist(), 
         }
 
-        tau_inter_line_data = get_tau_inter_line_data(all_stars_from_all_programs)
-        football_data = get_football_data([all_stars_from_all_programs])
+        tau_inter_line_data = get_tau_inter_line_data(programs)
+        football_data = get_football_data([programs])
 
         data = {
             'starinfo': starinfo,
