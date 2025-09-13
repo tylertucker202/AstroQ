@@ -139,9 +139,9 @@ def get_slew_animation_data():
 
     # Telescope slew path
     stamps = [0] * len(tjd)
-    slewPath = pl.createTelSlewPath(stamps, model.schedule['Time'], stars)
-    AZ1 = model.observatory.observer.altaz(
-        tjd, slewPath, grid_times_targets=False)
+
+    slewPath = pl.createTelSlewPath(stamps, model.schedule['Time'], [s.target for s in stars])
+    AZ1 = model.observatory.observer.altaz( tjd, slewPath, grid_times_targets=False)
 
     # rows are times, columns are targets
     alt = np.round(AZ.az.rad, 2).T.tolist()
