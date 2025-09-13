@@ -279,6 +279,7 @@ def dynamic_data(semester_code, date, band, page=None):
         }
         return data, 200
     elif page in ["admin" or "program"]:
+        #TODO verify if admin is in config to continue loading data/page
         programs = np.concatenate(list(data_astroq[0].values())) if page=='admin' else data_astroq[0].get(program_code, None)
 
         programs = np.concatenate(list(data_astroq[0].values()))
