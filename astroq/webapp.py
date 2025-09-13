@@ -283,8 +283,6 @@ def dynamic_data(semester_code, date, band, page=None):
         #TODO verify if admin is in config to continue loading data/page
         programs = np.concatenate(list(data_astroq[0].values())) if page=='admin' else data_astroq[0].get(program_code, None)
 
-        programs = np.concatenate(list(data_astroq[0].values()))
-
         # Get request frame table for all stars
         request_df = pl.get_request_frame(semester_planner, programs)
         starinfo = request_df.to_dict(orient='records')
@@ -295,7 +293,7 @@ def dynamic_data(semester_code, date, band, page=None):
         }
 
         birdseye_data = {
-            'starmap': star_obj.starmap.tolist(),
+            'starmap': [star_obj.starmap.tolist() for star_obj in programs],
             'dates': semester_planner.add_dates_array.tolist(), 
         }
 
