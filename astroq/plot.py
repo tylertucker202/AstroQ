@@ -29,6 +29,7 @@ import plotly.graph_objects as go
 from matplotlib.figure import Figure
 from plotly.subplots import make_subplots
 from astropy.time import Time, TimeDelta
+from scipy.interpolate import griddata
 
 # Local imports
 import astroq.access as ac
@@ -721,31 +722,7 @@ def compute_seasonality(semester_planner, starnames, ras, decs):
 
     return available_nights_onsky
 
-def get_football(semester_planner, all_stars, use_program_colors=False):
-    """
-    "Football plot"
-    Interactive sky map with static heatmap background and interactive star points.
-
-    Parameters:
-        semester_planner: the semester planner object
-        all_stars (list): array of StarPlotter objects
-        use_program_colors (bool): If True, use program_color_rgb; if False, use star_color_rgb (default: False)
-
-    Returns:
-        plotly.graph_objects.Figure
-    """
-
-    starnames = [all_stars[r].starname for r in range(len(all_stars))]
-    programs = [all_stars[r].program for r in range(len(all_stars))]
-    ras = [all_stars[r].ra for r in range(len(all_stars))]
-    decs = [all_stars[r].dec for r in range(len(all_stars))]
-    # Choose color based on flag
-    if use_program_colors:
-        colors = [all_stars[r].program_color_rgb for r in range(len(all_stars))]
-    else:
-        colors = [all_stars[r].star_color_rgb for r in range(len(all_stars))]
-    program_frame = pd.DataFrame({"starname":starnames, "program_code":programs, "color":colors, "ra":ras, "dec":decs})
-
+def get_grid_data(semester_planner):
     n_ra = 90
     ras = np.linspace(0,360,n_ra)
     n_dec = 90
@@ -782,8 +759,6 @@ def get_football(semester_planner, all_stars, use_program_colors=False):
     }
     grid_frame = pd.DataFrame(grid_stars)
 
-    available_nights_onsky_requests = compute_seasonality(semester_planner, program_frame['starname'], program_frame['ra'], program_frame['dec'])
-    
     # Check if cached sky availability data exists for the background grid. 
     semester = semester_planner.semester_start_date[:4] + semester_planner.semester_letter
     cache_file = f"{DATADIR}/{semester}_sky_availability.csv"
@@ -800,21 +775,49 @@ def get_football(semester_planner, all_stars, use_program_colors=False):
         })
         cache_df.to_csv(cache_file, index=False)
 
-    from scipy.interpolate import griddata
     NIGHTS_grid = griddata(
     points=(grid_frame.ra, grid_frame.dec),
     values=grid_frame.nights_observable,
     xi=(RA_grid, DEC_grid),
     method='linear'
     )
+    return NIGHTS_grid, RA_grid, DEC_grid
+
+def get_football(semester_planner, all_stars, use_program_colors=False):
+    """
+    "Football plot"
+    Interactive sky map with static heatmap background and interactive star points.
+
+    Parameters:
+        semester_planner: the semester planner object
+        all_stars (list): array of StarPlotter objects
+        use_program_colors (bool): If True, use program_color_rgb; if False, use star_color_rgb (default: False)
+
+    Returns:
+        plotly.graph_objects.Figure
+    """
+
+    starnames = [all_stars[r].starname for r in range(len(all_stars))]
+    programs = [all_stars[r].program for r in range(len(all_stars))]
+    ras = [all_stars[r].ra for r in range(len(all_stars))]
+    decs = [all_stars[r].dec for r in range(len(all_stars))]
+    # Choose color based on flag
+    if use_program_colors:
+        colors = [all_stars[r].program_color_rgb for r in range(len(all_stars))]
+    else:
+        colors = [all_stars[r].star_color_rgb for r in range(len(all_stars))]
+    program_frame = pd.DataFrame({"starname":starnames, "program_code":programs, "color":colors, "ra":ras, "dec":decs})
+    # Generate or load grid frame
+
+    NIGHTS_grid, RA_grid, DEC_grid = get_grid_data(semester_planner)
+
 
     # Step 1: Generate static heatmap image with matplotlib
-    RA_shifted = np.radians(RA_grid - 180)
-    DEC_rad = np.radians(DEC_grid)
-
-    fig_mpl, ax = plt.subplots(subplot_kw={'projection': 'mollweide'}, figsize=(10, 5))
-    im = ax.pcolormesh(RA_shifted, DEC_rad, NIGHTS_grid, cmap='gray', shading='nearest', vmin=70, vmax=184)
-    ax.axis('off')
+    # RA_shifted = np.radians(RA_grid - 180)
+    # DEC_rad = np.radians(DEC_grid)
+    # fig_mpl, ax = plt.subplots(subplot_kw={'projection': 'mollweide'}, figsize=(10, 5))
+    # im = ax.pcolormesh(RA_shifted, DEC_rad, NIGHTS_grid, cmap='gray', shading='nearest', vmin=70, vmax=184)
+    # ax.axis('off')
 
     # Save to buffer
     buf = BytesIO()

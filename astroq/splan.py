@@ -19,7 +19,7 @@ import gurobipy as gp
 from gurobipy import GRB
 import numpy as np
 import pandas as pd
-from . import plot as pl 
+from . import plot as pl
 from astropy.time import Time, TimeDelta
 import astroplan as apl
 
@@ -713,7 +713,7 @@ class SemesterPlanner(object):
 
         # --- Save data_astroq to pickle file ---
         data_astroq_pkl = os.path.join(self.output_directory, 'data_astroq.pkl')
-        data_astroq = pl.process_stars(planner_copy) # writing data_astroq.pkl
+        data_astroq = process_stars(planner_copy) # writing data_astroq.pkl
         with open(data_astroq_pkl, 'wb') as f:
             pickle.dump(data_astroq, f)
 
