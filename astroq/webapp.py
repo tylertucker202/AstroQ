@@ -57,7 +57,7 @@ def load_data_for_path(semester_code, date, band, page=None):
             return False, f"Error loading night planner from {night_planner_pkl}"
         return True, "Data loaded successfully"
 
-    if page == "admin" or page == 'star':
+    if page in ["admin", 'star', 'program']:
         semester_planner_pkl = os.path.join(workdir, 'semester_planner.pkl')
         data_astroq_pkl = os.path.join(workdir, 'data_astroq.pkl')
         # Load semester planner
@@ -249,8 +249,7 @@ def dynamic_data(semester_code, date, band, page=None):
     # Load data for this path
     if program_code is not None:
         # to get semester_planner and data_astroq
-        success, message = load_data_for_path(
-            semester_code, date, band, 'admin')
+        success, message = load_data_for_path( semester_code, date, band, 'program')
     else:
         success, message = load_data_for_path(semester_code, date, band, page)
     if not success:
@@ -336,7 +335,7 @@ def dynamic_page(semester_code, date, band, page=None):
     if program_code is not None:
         # to get semester_planner and data_astroq
         success, message = load_data_for_path(
-            semester_code, date, band, 'admin')
+            semester_code, date, band, 'program')
     else:
         success, message = load_data_for_path(semester_code, date, band, page)
     if not success:
