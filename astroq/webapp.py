@@ -109,7 +109,7 @@ def get_ladder_data():
     # TODO: make get ladder data a function
     data_tts = night_planner.solution if night_planner is not None else None
     data = pd.DataFrame.from_dict(
-        data_tts[0].plotly).to_dict(orientation='records')
+        data_tts[0].plotly).to_dict(orient='records')
     if data_tts is None:
         raise ValueError("Error: No night planner solution data available")
     ladder_data = data
