@@ -127,9 +127,9 @@ def get_slew_animation_data():
     list_targets = []
     for sched in model.schedule['Starname']:
         for star in stars:
-            if star.name == sched['Starname']:
+            if star.name == sched:
                 list_targets.append(star.target)
-    starnames = { k:v for k, v in zip(model.plotly['Starname'], model.plotly['human_starnames']) }
+    starnames = { k:v for k, v in zip(model.plotly['Starname'], model.plotly['human_starname']) }
     for star in stars:
         tgt = star.__dict__
         tgt['target_name'] = starnames.get(tgt['name'], tgt['name'])
