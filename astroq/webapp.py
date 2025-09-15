@@ -125,12 +125,14 @@ def get_slew_animation_data():
     times = np.arange(tstart, tend, TimeDelta(animationStep, format='sec').jd)
     tjd = Time(times, format='jd')
     list_targets = []
-    for n in range(len(model.schedule['Starname'])):
-        for s in stars:
-            if s.name == model.schedule['Starname'][n]:
-                list_targets.append(s.target)
+    for sched in model.schedule['Starname']:
+        for star in stars:
+            if star.name == sched['Starname']:
+                list_targets.append(star.target)
+    starnames = { k:v for k, v in zip(model.plotly['Starname'], model.plotly['human_starnames']) }
     for star in stars:
         tgt = star.__dict__
+        tgt['target_name'] = starnames.get(tgt['name'], tgt['name'])
         del tgt['target']
         targets.append(tgt)
 
@@ -292,6 +294,7 @@ def dynamic_data(semester_code, date, band, page=None):
             'lines': lines
         }
 
+        #TODO: find out what birdseye needs. starmap returns all zeros! 
         birdseye_data = {
             'starmap': [star_obj.starmap.tolist() for star_obj in programs],
             'dates': semester_planner.all_dates_array, 
