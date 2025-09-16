@@ -121,7 +121,7 @@ def get_slew_animation_data():
     model = data_tts[0]
     stars = model.stars
     tdf = pd.DataFrame(model.plotly)
-    tdf.columns.rename({'Minutes the from Start of the Night': 'minutes_from_start'}, inplace=True)
+    minColName = 'Minutes the from Start of the Night' #TODO: fix this when they correct the typo
     targets = tdf.to_dict(orient='records')
     nightstart = model.nightstarts.isot
     nightend = model.nightends.isot
@@ -129,7 +129,7 @@ def get_slew_animation_data():
     for tgt in targets:
         star = next((s for s in stars if s.name == tgt['name']), None)
         tgt = {**star.__dict__, **tgt}
-        tstart = start + datetime.timedelta(minutes=tgt['minutes_from_start'])        
+        tstart = start + datetime.timedelta(minutes=tgt[minColName])
         tend = tstart + datetime.timedelta(minutes=tgt['expwithreadout'])
         tgt['time_started'] = datetime.datetime.strftime(tstart, "%Y-%m-%dT%H:%M:%S.%fZ")
         tgt['time_ended'] = datetime.datetime.strftime(tend, "%Y-%m-%dT%H:%M:%S.%fZ")
