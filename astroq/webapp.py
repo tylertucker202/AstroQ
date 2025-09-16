@@ -36,7 +36,7 @@ data_astroq = None
 semester_planner = None
 night_planner = None
 uptree_path = '.'  # TODO make config
-DATE_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+DATE_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 
 def load_data_for_path(semester_code, date, band, page=None):
