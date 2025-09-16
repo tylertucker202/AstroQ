@@ -128,7 +128,7 @@ def get_slew_animation_data():
     nightend = model.nightends.isot
     start = datetime.datetime.strptime(nightstart, DATE_TIME_FORMAT)
     for tgt in targets:
-        star = next((s for s in stars if s.name == tgt['name']), None)
+        star = next((s for s in stars if s.StarName == tgt['name']), None)
         tgt = {**star.__dict__, **tgt}
         tstart = start + datetime.timedelta(minutes=tgt[minColName])
         tend = tstart + datetime.timedelta(minutes=tgt['expwithreadout'])
