@@ -9,6 +9,7 @@ import pickle
 import threading
 from configparser import ConfigParser
 from io import BytesIO
+import datetime
 
 # Third-party imports
 import imageio.v3 as iio
@@ -118,46 +119,25 @@ def get_ladder_data():
 def get_slew_animation_data():
     data_tts = night_planner.solution if night_planner is not None else None
     model = data_tts[0]
-    tstart, tend = model.nightstarts.jd, model.nightends.jd
     stars = model.stars
-    targets = []
-    animationStep = 120  # seconds
-    times = np.arange(tstart, tend, TimeDelta(animationStep, format='sec').jd)
-    tjd = Time(times, format='jd')
-    list_targets = []
-    for sched in model.schedule['Starname']:
-        for star in stars:
-            if star.name == sched:
-                list_targets.append(star.target)
-    starnames = { k:v for k, v in zip(model.plotly['Starname'], model.plotly['human_starname']) }
-    for star in stars:
-        tgt = star.__dict__
-        tgt['target_name'] = starnames.get(tgt['name'], tgt['name'])
-        del tgt['target']
+    tdf = pd.DataFrame(model.plotly)
+    tdf.columns.rename({'Minutes the from Start of the Night': 'minutes_from_start'}, inplace=True)
+    targets = tdf.to_dict(orient='records')
+    nightstart = model.nightstarts.isot
+    nightend = model.nightends.isot
+    start = datetime.datetime.strptime(nightstart, "%Y-%m-%dT%H:%M:%S.%fZ")
+    for tgt in targets:
+        star = next((s for s in stars if s.name == tgt['name']), None)
+        tgt = {**star.__dict__, **tgt}
+        tstart = start + datetime.timedelta(minutes=tgt['minutes_from_start'])        
+        tend = tstart + datetime.timedelta(minutes=tgt['expwithreadout'])
+        tgt['time_started'] = datetime.datetime.strftime(tstart, "%Y-%m-%dT%H:%M:%S.%fZ")
+        tgt['time_ended'] = datetime.datetime.strftime(tend, "%Y-%m-%dT%H:%M:%S.%fZ")
         targets.append(tgt)
-
-    # Compute alt/az of each target at each time
-    AZ = model.observatory.observer.altaz(tjd, list_targets, grid_times_targets=True)
-
-    # Telescope slew path
-    stamps = [0] * len(tjd)
-
-    slewPath = pl.createTelSlewPath(stamps, model.schedule['Time'], list_targets)
-    AZ1 = model.observatory.observer.altaz( tjd, slewPath, grid_times_targets=False)
-
-    # rows are times, columns are targets
-    alt = np.round(AZ.az.rad, 2).T.tolist()
-    az = (90 - np.round(AZ.alt.deg, 2)).T.tolist()
-    tel_az = np.round(AZ1.az.rad, 2).tolist()
-    tel_zen = (90 - np.round(AZ1.alt.deg, 2)).tolist()
-
     slew_animation_data = {
         'targets': targets,
-        'tel_az': tel_az,  # path of telescope azimuth
-        'tel_zen': tel_zen,
-        'alt': alt,  # altitudes of all targets
-        'az': az,
-        'times': tjd.isot.tolist()
+        'nightstart': nightstart,
+        'nightends': nightend,
     }
     return slew_animation_data
 
