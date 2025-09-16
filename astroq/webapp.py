@@ -36,6 +36,7 @@ data_astroq = None
 semester_planner = None
 night_planner = None
 uptree_path = '.'  # TODO make config
+DATE_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def load_data_for_path(semester_code, date, band, page=None):
@@ -125,14 +126,14 @@ def get_slew_animation_data():
     targets = tdf.to_dict(orient='records')
     nightstart = model.nightstarts.isot
     nightend = model.nightends.isot
-    start = datetime.datetime.strptime(nightstart, "%Y-%m-%dT%H:%M:%S.%fZ")
+    start = datetime.datetime.strptime(nightstart, DATE_TIME_FORMAT)
     for tgt in targets:
         star = next((s for s in stars if s.name == tgt['name']), None)
         tgt = {**star.__dict__, **tgt}
         tstart = start + datetime.timedelta(minutes=tgt[minColName])
         tend = tstart + datetime.timedelta(minutes=tgt['expwithreadout'])
-        tgt['time_started'] = datetime.datetime.strftime(tstart, "%Y-%m-%dT%H:%M:%S.%fZ")
-        tgt['time_ended'] = datetime.datetime.strftime(tend, "%Y-%m-%dT%H:%M:%S.%fZ")
+        tgt['time_started'] = datetime.datetime.strftime(tstart, DATE_TIME_FORMAT)
+        tgt['time_ended'] = datetime.datetime.strftime(tend, DATE_TIME_FORMAT)
         targets.append(tgt)
     slew_animation_data = {
         'targets': targets,
