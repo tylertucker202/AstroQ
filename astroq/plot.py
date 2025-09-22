@@ -263,8 +263,7 @@ def get_cof(semester_planner, all_stars):
     fig = go.Figure()
     fig.update_layout(plot_bgcolor=gray, paper_bgcolor=clear) #autosize=True,margin=dict(l=40, r=40, t=40, b=40),
     burn_line = np.linspace(0, 100, len(semester_planner.all_dates_array))
-    for b in range(len(burn_line)):
-        burn_line[b] = np.round(burn_line[b],2)
+    burn_line = [ np.round(bl,2) for bl in burn_line ]
     fig.add_trace(go.Scatter(
         x=semester_planner.all_dates_array,
         y=burn_line,
@@ -274,15 +273,14 @@ def get_cof(semester_planner, all_stars):
         hovertemplate= 'Date: %{x}' + '<br>% Complete: %{y}'
     ))
 
-    lines = []
     cume_observe = np.zeros(len(semester_planner.all_dates_array))
     max_value = 0
     
     # First, compute the total COF data for all stars
-    for i in range(len(all_stars)):
-        cume_observe += all_stars[i].cume_observe
-        max_value += all_stars[i].total_observations_requested
-    
+    for star in all_stars:
+        cume_observe += star.cume_observe
+        max_value += star.total_observations_requested
+
     cume_observe_pct = (cume_observe / max_value) * 100
     
     # Add the Total trace first (so it appears below other traces)
@@ -297,17 +295,18 @@ def get_cof(semester_planner, all_stars):
     ))
     
     # Then add individual star traces (so they appear above the Total trace)
-    for i in range(len(all_stars)):
+    lines = []
+    for star in all_stars:
         fig.add_trace(go.Scatter(
             x=semester_planner.all_dates_array,
-            y=all_stars[i].cume_observe_pct,
+            y=star.cume_observe_pct,
             mode='lines',
-            line=dict(color=all_stars[i].star_color_rgb, width=2),
-            name=all_stars[i].starname,
+            line=dict(color=star.star_color_rgb, width=2),
+            name=star.starname,
             hovertemplate= 'Date: %{x}' + '<br>% Complete: %{y}' + '<br># Obs Requested: ' + \
-                str(all_stars[i].total_observations_requested) + '<br>'
+                str(star.total_observations_requested) + '<br>'
         ))
-        lines.append(str(all_stars[i].starname) + "," + str(np.round(all_stars[i].cume_observe_pct[-1],2)))
+        lines.append(str(star.starname) + "," + str(np.round(star.cume_observe_pct[-1],2)))
 
     fig.add_vrect(
             x0=semester_planner.current_day,
@@ -991,16 +990,23 @@ def get_ladder(data):
 
     new_already_processed = []
     ifixer = 0 # for multi-visit targets, it throws off the one row per target plotting...this fixes it
-    for i in range(len(orderData['Starname'])):
-        if orderData['Starname'][i] not in new_already_processed:
+    for starname, idx in enumerate(orderData['Starname']):
+        if starname not in new_already_processed:
             # find all the times in the night when the star is being visited
-            indices = [k for k in range(len(orderData['Starname'])) if orderData['Starname'][k] == orderData['Starname'][i]]
-            for j in range(len(indices)):
-                fig.add_shape(type="rect", x0=orderData['Start Exposure'][indices[j]], x1=orderData['Start Exposure'][indices[j]] + orderData["Total Exp Time (min)"][indices[j]], y0=i+ifixer-0.5, y1=i+ifixer+0.5, fillcolor=colordict[str(orderData['Priority'][indices[j]])])
-                if j == 0:
+            indices = [kdx for kdx in range(len(starname)) if starname[kdx] == starname]
+            for jdx in indices:
+                x0 = orderData['Start Exposure'][jdx]
+                expTime = orderData["Total Exp Time (min)"][jdx]
+                y0 = idx+ifixer
+                color = colordict[str(orderData['Priority'][jdx])]
+                # add a rectangle for each visit, colored by priority
+                fig.add_shape(type="rect", x0=x0, x1=x0 + expTime, y0=y0-0.5, y1=y0+0.5, fillcolor=color)
+                if jdx == 0:
+                    xfirstAvailable = orderData['First Available'][jdx]
+                    xlastAvailable = orderData['Last Available'][jdx]
                     # only do this once, otherwise the green bar gets discolored compared to other rows
-                    fig.add_shape(type="rect", x0=orderData['First Available'][indices[j]], x1=orderData['Last Available'][indices[j]], y0=i+ifixer-0.5, y1=i+ifixer+0.5, fillcolor='lime', opacity=0.3, showlegend=False)
-            new_already_processed.append(orderData['Starname'][i])
+                    fig.add_shape(type="rect", x0=xfirstAvailable, x1=xlastAvailable, y0=y0-0.5, y1=y0+0.5, fillcolor='lime', opacity=0.3, showlegend=False)
+            new_already_processed.append(starname)
         else:
             # if we already did this star, it is a multi-visit star and we need to adjust the row counter for plotting purposes
             ifixer -= 1

@@ -150,9 +150,17 @@ def get_cof_data(all_stars):
     lines = []
     for star in all_stars:
         dates = [*list(star.observations_past.keys()), *list(star.observations_future.keys())]
+        values = []
+        for observed, idx in enumerate(star.dates_observe):
+            if not observed:
+                continue
+            val = {
+                'date': dates[idx],
+                'percent_complete': star.cume_observe_pct[idx],
+            }
+            values.append(val)
         line = dict(
-            dates=dates,
-            cumulative_observe_pct=star.cume_observe_pct.astype(float).tolist(),
+            values=values,
             name=star.starname,
             total_observations_requested=star.total_observations_requested
         )
@@ -163,20 +171,23 @@ def get_cof_data_for_starname(starname):
 
     program_dict = data_astroq[0]
 
+    starinfo = None
     for program in program_dict.values():
         for star_obj in program:
             true_starname = star_obj.starname
-            object_compare_starname = true_starname.lower().replace(' ', '')
+            object_compare_starname = true_starname.upper().replace(' ', '')
             if object_compare_starname != starname:
                 continue
             # Get request frame table for this specific star
             request_df = pl.get_request_frame(semester_planner, [star_obj])
             starinfo = request_df.to_dict(orient='records')
-    
     if starinfo is None:
         raise ValueError(f"Error, star {starname} not found in programs {list(program_dict.keys())}")
+
     lines = get_cof_data([star_obj])
     cof_data = {
+        'startdate': semester_planner.all_dates_array[0],
+        'enddate': semester_planner.all_dates_array[-1],
         'starinfo': starinfo,
         'lines': lines
     }
@@ -250,7 +261,8 @@ def dynamic_data(semester_code, date, band, page=None):
         request_data = request_df.to_dict(orient='records')
         birdseye_data = {
             'starmap': star_obj.starmap.tolist(),
-            'dates': semester_planner.all_dates_array,
+            'startdate': semester_planner.all_dates_array[0],
+            'enddate': semester_planner.all_dates_array[-1],
         }
 
         tau_inter_line_data = get_tau_inter_line_data([star_obj])
@@ -274,6 +286,8 @@ def dynamic_data(semester_code, date, band, page=None):
 
         lines = get_cof_data(programs)
         cof_data = {
+            'startdate': semester_planner.all_dates_array[0],
+            'enddate': semester_planner.all_dates_array[-1],
             'lines': lines
         }
 
