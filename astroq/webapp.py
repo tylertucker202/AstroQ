@@ -144,33 +144,6 @@ def get_slew_animation_data():
     }
     return slew_animation_data
 
-def get_az_el_data():
-    data_tts = night_planner.solution if night_planner is not None else None
-    model = data_tts[0]
-    stars = model.stars
-    tdf = pd.DataFrame(model.plotly)
-    minColName = 'Minutes the from Start of the Night' #TODO: fix this when they correct the typo
-    tdict= tdf.to_dict(orient='records')
-    nightstart = model.nightstarts.isot
-    nightend = model.nightends.isot
-    start = datetime.datetime.strptime(nightstart, DATE_TIME_FORMAT)
-    targets = []
-    for tgt in tdict:
-        star = next((s for s in stars if s.name == tgt['Starname']), None)
-        tgt = {**star.__dict__, **tgt}
-        tgt.pop('target')
-        tstart = start + datetime.timedelta(minutes=tgt[minColName])
-        tend = tstart + datetime.timedelta(minutes=tgt['expwithreadout'])
-        tgt['time_started'] = datetime.datetime.strftime(tstart, DATE_TIME_FORMAT)
-        tgt['time_ended'] = datetime.datetime.strftime(tend, DATE_TIME_FORMAT)
-        targets.append(tgt)
-    az_el_data = {
-        'targets': targets,
-        'nightstart': nightstart,
-        'nightends': nightend,
-    }
-    return az_el_data
-
 # Dynamic data for all pages
 
 def get_cof_data(all_stars):
@@ -341,11 +314,9 @@ def dynamic_data(semester_code, date, band, page=None):
     elif page == "nightplan":
         ladder_data = get_ladder_data()
         slew_animation_data = get_slew_animation_data()
-        az_el_data = get_az_el_data()
         data = {
             'ladder_data': ladder_data,
             'slew_animation_data': slew_animation_data,
-            'az_el_data': az_el_data
         }
         return jsonify(data), 200
     else:
