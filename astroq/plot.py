@@ -990,7 +990,7 @@ def get_ladder(data):
 
     new_already_processed = []
     ifixer = 0 # for multi-visit targets, it throws off the one row per target plotting...this fixes it
-    for starname, idx in enumerate(orderData['Starname']):
+    for idx, starname in enumerate(orderData['Starname']):
         if starname not in new_already_processed:
             # find all the times in the night when the star is being visited
             indices = [kdx for kdx in range(len(starname)) if starname[kdx] == starname]

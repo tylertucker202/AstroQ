@@ -144,6 +144,33 @@ def get_slew_animation_data():
     }
     return slew_animation_data
 
+def get_az_el_data():
+    data_tts = night_planner.solution if night_planner is not None else None
+    model = data_tts[0]
+    stars = model.stars
+    tdf = pd.DataFrame(model.plotly)
+    minColName = 'Minutes the from Start of the Night' #TODO: fix this when they correct the typo
+    tdict= tdf.to_dict(orient='records')
+    nightstart = model.nightstarts.isot
+    nightend = model.nightends.isot
+    start = datetime.datetime.strptime(nightstart, DATE_TIME_FORMAT)
+    targets = []
+    for tgt in tdict:
+        star = next((s for s in stars if s.name == tgt['Starname']), None)
+        tgt = {**star.__dict__, **tgt}
+        tgt.pop('target')
+        tstart = start + datetime.timedelta(minutes=tgt[minColName])
+        tend = tstart + datetime.timedelta(minutes=tgt['expwithreadout'])
+        tgt['time_started'] = datetime.datetime.strftime(tstart, DATE_TIME_FORMAT)
+        tgt['time_ended'] = datetime.datetime.strftime(tend, DATE_TIME_FORMAT)
+        targets.append(tgt)
+    az_el_data = {
+        'targets': targets,
+        'nightstart': nightstart,
+        'nightends': nightend,
+    }
+    return az_el_data
+
 # Dynamic data for all pages
 
 def get_cof_data(all_stars):
@@ -151,13 +178,15 @@ def get_cof_data(all_stars):
     for star in all_stars:
         dates = [*list(star.observations_past.keys()), *list(star.observations_future.keys())]
         values = []
-        for observed, idx in enumerate(star.dates_observe):
+        ddx = 0
+        for idx, observed in enumerate(star.dates_observe):
             if not observed:
                 continue
             val = {
-                'date': dates[idx],
+                'date': dates[ddx],
                 'percent_complete': star.cume_observe_pct[idx],
             }
+            ddx += 1
             values.append(val)
         line = dict(
             values=values,
@@ -167,7 +196,7 @@ def get_cof_data(all_stars):
         lines.append(line)
     return lines
 
-def get_cof_data_for_starname(starname):
+def get_cof_data_for_starname(starname, date):
 
     program_dict = data_astroq[0]
 
@@ -189,7 +218,8 @@ def get_cof_data_for_starname(starname):
         'startdate': semester_planner.all_dates_array[0],
         'enddate': semester_planner.all_dates_array[-1],
         'starinfo': starinfo,
-        'lines': lines
+        'lines': lines,
+        'date': date
     }
     return cof_data, star_obj
 
@@ -255,7 +285,7 @@ def dynamic_data(semester_code, date, band, page=None):
     # Route to appropriate page based on parameters
     if starname is not None:
 
-        cof_data, star_obj = get_cof_data_for_starname(starname)
+        cof_data, star_obj = get_cof_data_for_starname(starname, date)
 
         request_df = pl.get_request_frame(semester_planner, [star_obj])
         request_data = request_df.to_dict(orient='records')
@@ -311,9 +341,11 @@ def dynamic_data(semester_code, date, band, page=None):
     elif page == "nightplan":
         ladder_data = get_ladder_data()
         slew_animation_data = get_slew_animation_data()
+        az_el_data = get_az_el_data()
         data = {
             'ladder_data': ladder_data,
             'slew_animation_data': slew_animation_data,
+            'az_el_data': az_el_data
         }
         return jsonify(data), 200
     else:
