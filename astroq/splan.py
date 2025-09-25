@@ -652,12 +652,14 @@ class SemesterPlanner(object):
         self.build_model_round1()
         self.optimize_model()
         self.serialize_results_csv()
+        self.save_results_to_db()
         logs.info("Round 1 complete.")
         if self.run_bonus_round:
             self.round_info = 'Round2'
             self.build_model_round2()
             self.optimize_model()
             self.serialize_results_csv()
+            self.save_results_to_db()
             logs.info("Round 2 complete.")
         logs.info("Scheduling complete, clear skies!")
 
@@ -683,6 +685,10 @@ class SemesterPlanner(object):
         self.constraint_fix_previous_objective()
         self.set_objective_maximize_slots_used()
         logs.info(f"Time to build constraints: {np.round(time.time()-t1,3):.3f}")
+    
+    def save_results_to_db(self):
+        #TODO: implement saving results to DB
+        pass
 
     def serialize_results_csv(self):
         logs.debug("Building human readable schedule.")
