@@ -35,16 +35,22 @@ app = Flask(__name__, template_folder="../templates")
 data_astroq = None
 semester_planner = None
 night_planner = None
-uptree_path = '.'  # TODO make config
-DATE_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
+cf = './config_template.ini'
+config = ConfigParser()
+config.read(cf)
+
+DATE_TIME_FORMAT = config.getstring('webapp', 'date_time_format', fallback="%Y-%m-%dT%H:%M:%S.%f") 
+BANDS = config.getlist('webapp', 'bands', fallback=['band1', 'band3'])
+UPTREE_PATH = config.getstring('webapp', 'uptree_path', fallback='.')
+ADMIN_IDS = config.getlist('webapp', 'admin', fallback=[])
 
 def load_data_for_path(semester_code, date, band, page=None):
     """Load data for a specific semester_code/date/band combination"""
     global data_astroq, semester_planner, night_planner
 
     # Construct the workdir path based on URL parameters
-    workdir = os.path.join(uptree_path, semester_code, date, band, "outputs")
+    workdir = os.path.join(UPTREE_PATH, semester_code, date, band, "outputs")
     if not os.path.exists(workdir):
         return False, f"Directory not found: {workdir}"
 
@@ -146,33 +152,6 @@ def get_slew_animation_data():
     }
     return slew_animation_data
 
-def get_az_el_data():
-    data_tts = night_planner.solution if night_planner is not None else None
-    model = data_tts[0]
-    stars = model.stars
-    tdf = pd.DataFrame(model.plotly)
-    minColName = 'Minutes the from Start of the Night' #TODO: fix this when they correct the typo
-    tdict= tdf.to_dict(orient='records')
-    nightstart = model.nightstarts.isot
-    nightend = model.nightends.isot
-    start = datetime.datetime.strptime(nightstart, DATE_TIME_FORMAT)
-    targets = []
-    for tgt in tdict:
-        star = next((s for s in stars if s.name == tgt['Starname']), None)
-        tgt = {**star.__dict__, **tgt}
-        tgt.pop('target')
-        tstart = start + datetime.timedelta(minutes=tgt[minColName])
-        tend = tstart + datetime.timedelta(minutes=tgt['expwithreadout'])
-        tgt['time_started'] = datetime.datetime.strftime(tstart, DATE_TIME_FORMAT)
-        tgt['time_ended'] = datetime.datetime.strftime(tend, DATE_TIME_FORMAT)
-        targets.append(tgt)
-    az_el_data = {
-        'targets': targets,
-        'nightstart': nightstart,
-        'nightends': nightend,
-    }
-    return az_el_data
-
 # Dynamic data for all pages
 
 def get_cof_data(all_stars):
@@ -269,7 +248,7 @@ def get_tau_inter_line_data(stars):
 def dynamic_data(semester_code, date, band, page=None):
     """Handle all dynamic routes based on URL parameters"""
     # Validate parameters
-    if band not in ['band1', 'band3']:  # TODO put in config file
+    if band not in BANDS:
         abort(400, description="Band must be 'band1' or 'band3'")
 
     program_code = request.args.get('program_code')
@@ -310,7 +289,12 @@ def dynamic_data(semester_code, date, band, page=None):
         return data, 200
     elif page in ["admin", "program"]:
         #TODO verify if admin is in config to continue loading data/page
-        programs = np.concatenate(list(data_astroq[0].values())) if page=='admin' else data_astroq[0].get(program_code, None)
+        if page=='admin':
+            programs = np.concatenate(list(data_astroq[0].values()))
+        elif page=='program':
+            programs = data_astroq[0].get(program_code, None)
+            if programs is None:
+                return f"Error: Program {program_code} not found", 404
 
         # Get request frame table for all stars
         request_df = pl.get_request_frame(semester_planner, programs)
@@ -343,11 +327,9 @@ def dynamic_data(semester_code, date, band, page=None):
     elif page == "nightplan":
         ladder_data = get_ladder_data()
         slew_animation_data = get_slew_animation_data()
-        az_el_data = get_az_el_data()
         data = {
             'ladder_data': ladder_data,
             'slew_animation_data': slew_animation_data,
-            'az_el_data': az_el_data
         }
         return jsonify(data), 200
     else:
