@@ -52,7 +52,7 @@ def load_data_for_path(semester_code, date, band, page=None):
     # Construct the workdir path based on URL parameters
     workdir = os.path.join(UPTREE_PATH, semester_code, date, band, "outputs")
     if not os.path.exists(workdir):
-        return False, f"Directory not found: {workdir}"
+        abort(404, f"Directory not found: {workdir}")
 
     if page == "nightplan":
         night_planner_pkl = os.path.join(workdir, 'night_planner.pkl')
@@ -60,10 +60,9 @@ def load_data_for_path(semester_code, date, band, page=None):
         try:
             with open(night_planner_pkl, 'rb') as f:
                 night_planner = pickle.load(f)
-        except:
+        except Exception as err:
             night_planner = None
-            return False, f"Error loading night planner from {night_planner_pkl}"
-        return True, "Data loaded successfully"
+            abort(500, f"Error loading night planner from {night_planner_pkl}: {str(err)}")
 
     elif page in ["admin", 'star', 'program']:
         semester_planner_pkl = os.path.join(workdir, 'semester_planner.pkl')
@@ -81,14 +80,10 @@ def load_data_for_path(semester_code, date, band, page=None):
             else:
                 with open(data_astroq_pkl, 'rb') as f:
                     data_astroq = pickle.load(f)
-        except Exception as e:
+        except Exception as err:
             semester_planner = None
             data_astroq = None
-            return False, f"Error loading semester planner: {str(e)}"
-        except Exception as e:
-            semester_planner = None
-            return False, f"Error loading semester planner: {str(e)}"
-        return True, "Data loaded successfully"
+            abort(500, f"Error loading semester planner from {semester_planner_pkl}: {str(err)}")
     else:
         abort(404, f"page {page} not in ['admin', 'star', 'program', 'nightplan']")
 
@@ -257,11 +252,9 @@ def dynamic_data(semester_code, date, band, page=None):
     # Load data for this path
     if program_code is not None:
         # to get semester_planner and data_astroq
-        success, message = load_data_for_path( semester_code, date, band, 'program')
+        load_data_for_path( semester_code, date, band, 'program')
     else:
-        success, message = load_data_for_path(semester_code, date, band, page)
-    if not success:
-        return f"Error: {message}", 404
+        load_data_for_path(semester_code, date, band, page)
 
     # Route to appropriate page based on parameters
     if starname is not None:
@@ -351,12 +344,9 @@ def dynamic_page(semester_code, date, band, page=None):
     # Load data for this path
     if program_code is not None:
         # to get semester_planner and data_astroq
-        success, message = load_data_for_path(
-            semester_code, date, band, 'program')
+        load_data_for_path( semester_code, date, band, 'program')
     else:
-        success, message = load_data_for_path(semester_code, date, band, page)
-    if not success:
-        return f"Error: {message}", 404
+        load_data_for_path(semester_code, date, band, page)
 
     # Route to appropriate page based on parameters
     if starname is not None:
@@ -561,12 +551,9 @@ def download_nightplan(semester_code, date, band):
         abort(400, description="Band must be 'band1' or 'band3'")
 
     # Load data for this path
-    success, message = load_data_for_path(
-        semester_code, date, band, 'nightplan')  # to get night_planner
+    load_data_for_path( semester_code, date, band, 'nightplan')  # to get night_planner
     # to get semester_planner and data_astroq
-    success, message = load_data_for_path(semester_code, date, band, 'admin')
-    if not success:
-        return f"Error: {message}", 404
+    load_data_for_path(semester_code, date, band, 'admin')
 
     if semester_planner is None or night_planner is None:
         return "Error: No planner data available", 404
