@@ -59,7 +59,7 @@ def load_data_for_path(semester_code, date, band, page=None):
             return False, f"Error loading night planner from {night_planner_pkl}"
         return True, "Data loaded successfully"
 
-    if page in ["admin", 'star', 'program']:
+    elif page in ["admin", 'star', 'program']:
         semester_planner_pkl = os.path.join(workdir, 'semester_planner.pkl')
         data_astroq_pkl = os.path.join(workdir, 'data_astroq.pkl')
         # Load semester planner
@@ -83,6 +83,8 @@ def load_data_for_path(semester_code, date, band, page=None):
             semester_planner = None
             return False, f"Error loading semester planner: {str(e)}"
         return True, "Data loaded successfully"
+    else:
+        abort(404, f"page {page} not in ['admin', 'star', 'program', 'nightplan']")
 
 
 # New homepage with navigation instructions
