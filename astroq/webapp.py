@@ -40,9 +40,9 @@ cf = './config_template.ini'
 config = ConfigParser()
 config.read(cf)
 
-DATE_TIME_FORMAT = config.getstring('webapp', 'date_time_format', fallback="%%Y-%m-%%dT%%H:%%M:%%S.%%f") 
+DATE_TIME_FORMAT = config.get('webapp', 'date_time_format', fallback="%%Y-%m-%%dT%%H:%%M:%%S.%%f") 
 BANDS = config.get('webapp', 'bands', fallback='band1,band3').split(',')
-UPTREE_PATH = config.getstring('webapp', 'uptree_path', fallback='.')
+UPTREE_PATH = config.get('webapp', 'uptree_path', fallback='.')
 ADMIN_IDS = config.get('webapp', 'admin', fallback='').split(',')
 
 def load_data_for_path(semester_code, date, band, page=None):
