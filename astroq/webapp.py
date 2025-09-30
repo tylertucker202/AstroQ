@@ -40,7 +40,7 @@ cf = './config_template.ini'
 config = ConfigParser()
 config.read(cf)
 
-DATE_TIME_FORMAT = config.get('webapp', 'date_time_format', fallback="%Y-%m-%dT%H:%M:%S.%f") 
+DATE_TIME_FORMAT = config.get('webapp', 'date_time_format') 
 BANDS = config.getlist('webapp', 'bands', fallback=['band1', 'band3'])
 UPTREE_PATH = config.get('webapp', 'uptree_path', fallback='.')
 ADMIN_IDS = config.getlist('webapp', 'admin', fallback=[])
