@@ -39,8 +39,8 @@ night_planner = None
 cf = './config_template.ini'
 config = ConfigParser()
 config.read(cf)
-
-DATE_TIME_FORMAT = config.get('webapp', 'date_time_format') 
+    
+DATE_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 BANDS = config.getlist('webapp', 'bands', fallback=['band1', 'band3'])
 UPTREE_PATH = config.get('webapp', 'uptree_path', fallback='.')
 ADMIN_IDS = config.getlist('webapp', 'admin', fallback=[])
